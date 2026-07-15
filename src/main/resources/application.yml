@@ -1,0 +1,33 @@
+server:
+  address: 127.0.0.1
+  port: 18181
+spring:
+  application:
+    name: print-agent
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+print-agent:
+  historico:
+    tamanho-maximo: 100
+  trabalho:
+    timeout-sincrono-segundos: 30
+  provider:
+    timeout-comando-segundos: 15
+  impressao:
+    configuracoes-desconhecidas: IGNORAR
+  cors:
+    origens-permitidas: [localhost, 127.0.0.1]
+  atualizacao:
+    habilitada: false
+    verificar-ao-iniciar: false
+  limites:
+    zpl-maximo-bytes: 2097152
+    raw-maximo-bytes: 2097152
+    pdf-maximo-bytes: 15728640
+logging:
+  file:
+    name: logs/print-agent.log
+  level:
+    root: INFO
+    br.eng.eliseu.printagent: INFO

@@ -436,6 +436,29 @@ As limitações da versão 1.0.0 permanecerão, salvo correção expressamente r
 
 ---
 
+# 6.1 Versão 1.0.2
+
+## Informações
+
+| Campo  | Valor               |
+| ------ | ------------------- |
+| Versão | 1.0.2               |
+| Data   | 15/07/2026          |
+| Status | EM_DESENVOLVIMENTO  |
+| Tipo   | Evolução compatível |
+
+## Adicionado
+
+* Painel administrativo local em `/printAgent`.
+* Resumo do status, versão, sistema operacional, fila e impressoras.
+* Consulta visual das impressoras e seus estados.
+* Consulta visual dos trabalhos atuais e do histórico.
+* Visualização das últimas linhas do log.
+* Atualização periódica do status quando a página está visível.
+* Interface responsiva, offline e sem dependências externas.
+
+---
+
 # 7. Versão 1.1.0
 
 ## Informações

@@ -417,6 +417,25 @@ Nenhuma nova funcionalidade relevante deverá ser adicionada nessa versão.
 
 ---
 
+# 6.1 Versão 1.0.2 — Painel administrativo local
+
+## Objetivo
+
+Disponibilizar em `http://localhost:18181/printAgent` uma página administrativa
+local, somente de leitura, que consome a API v1 existente.
+
+Escopo:
+
+* status e versão do agente;
+* quantidade de trabalhos na fila;
+* impressoras configuradas e seus estados;
+* trabalhos atuais;
+* histórico em memória;
+* últimas linhas do log;
+* funcionamento offline e sem dependências externas.
+
+---
+
 # 7. Versão 1.1.0 — Estabilidade e diagnóstico
 
 ## Objetivo

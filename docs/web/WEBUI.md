@@ -7,7 +7,7 @@
 | Projeto             | Print Agent                 |
 | Sistema relacionado | Presente                    |
 | Documento           | WEBUI.md                    |
-| Versão da interface | 1.0.0                       |
+| Versão da interface | 1.0.2                       |
 | Versão da API       | v1                          |
 | Java                | 17 LTS                      |
 | Namespace           | `br.eng.eliseu.printagent`  |
@@ -48,10 +48,10 @@ docs/api/API.md
 
 # 2. Endereço
 
-A interface deverá estar disponível em:
+A partir da versão 1.0.2, a interface deverá estar disponível em:
 
 ```text
-http://localhost:18181
+http://localhost:18181/printAgent
 ```
 
 A rota principal deverá abrir o Dashboard.
@@ -59,7 +59,7 @@ A rota principal deverá abrir o Dashboard.
 Exemplo:
 
 ```text
-GET /
+GET /printAgent
 ```
 
 A interface deverá utilizar caminhos relativos para comunicação com a API.
