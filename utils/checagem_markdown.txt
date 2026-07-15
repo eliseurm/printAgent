@@ -1,0 +1,83 @@
+# 1. Pendências para Revisão Final
+
+Antes de entregar o documento ao Codex, deverá ser realizada uma revisão única para verificar:
+
+1. consistência da numeração dos capítulos;
+2. consistência dos nomes dos DTOs;
+3. consistência entre modo síncrono e assíncrono;
+4. consistência dos códigos HTTP;
+5. consistência dos códigos de erro;
+6. duplicidade de requisitos;
+7. referências ao `application.yml`;
+8. referências aos endpoints que ainda serão detalhados em `API.md`;
+9. valores padrão;
+10. suporte real a PDF no Windows;
+11. comportamento de configurações desconhecidas;
+12. nomes finais dos pacotes;
+13. nomes finais das classes;
+14. compatibilidade da versão do Spring Boot com Java 17.
+
+A revisão não deverá incluir novas funcionalidades fora do escopo aprovado.
+
+---
+
+# 2. Instruções para Implementação pelo Codex
+
+O Codex deverá:
+
+1. ler integralmente esta especificação;
+2. ler os documentos complementares existentes;
+3. implementar o projeto na pasta:
+
+```text
+printAgent
+```
+
+4. utilizar Java 17;
+5. utilizar o namespace:
+
+```text
+br.eng.eliseu.printagent
+```
+
+6. não criar funcionalidades não especificadas;
+7. não adicionar autenticação;
+8. não adicionar banco de dados;
+9. não adicionar sistema de plugins;
+10. não alterar os contratos sem registrar a alteração;
+11. manter o agente desacoplado do sistema Presente;
+12. criar testes automatizados;
+13. documentar limitações encontradas;
+14. priorizar uma primeira versão funcional antes de otimizações prematuras.
+
+Quando houver ambiguidade, o Codex deverá escolher a solução mais simples que preserve:
+
+* funcionamento local;
+* independência de plataforma;
+* segurança;
+* extensibilidade dos Providers e estratégias;
+* compatibilidade com os contratos documentados.
+
+---
+
+# 3. O que fazer antes de comecar a implementar
+
+Resolver problemas dos markdows.
+
+- O roadmap chama apenas alguns endpoints de principais e condiciona os demais à prioridade, enquanto o changelog inclui todos na versão 1.0.0.
+  Correcao: Arrume o roadmap e deixe ele compativel com o changelog.
+
+- A Web UI prevê IGNORAR ou REJEITAR configurações desconhecidas, enquanto partes da especificação determinam encaminhar todas as propriedades desconhecidas ao provider. É necessário deixar claro se REJEITAR é realmente suportado.
+  Correcoes: As duas propriedades devem ser mantidas; IGNORAR=Mesmo que a propriedade for desconhecida o processo deve seguir, so rejeita se as propriedades informadas nao forem suficiente para concluir o processo.
+
+- O suporte a PDF no Windows é obrigatório para 1.0.0, mas simultaneamente aparece como risco e limitação dependente do driver.
+  Correcao: Mantenha o suporte a PDF para windows somente na proxima versao.
+
+- Existem repetições consideráveis entre a especificação, API, JSON, Web UI, roadmap e changelog. Muitas são úteis como consolidação, mas aumentam o risco de divergência. Não encontrei blocos Markdown com cercas abertas; estruturalmente, os arquivos permanecem legíveis.
+  Correcoes: Retire as repeticoes que podem prejudicar e aumentar o risco de divergencias.
+
+- Datas “A definir” no changelog parecem placeholders intencionais, inclusive para a versão 1.0.0.
+  Correcao: preencha com informacoes pertinentes.
+
+
+Resolver os problemas nos markdows e perguntar sobre possiveis duvidas.
