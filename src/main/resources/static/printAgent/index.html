@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Print Agent</title>
+  <link rel="stylesheet" href="/printAgent/app.css">
+</head>
+<body>
+  <header><div><span class="eyebrow">ADMINISTRAÇÃO LOCAL</span><h1>Print Agent</h1></div><div id="estado" class="pill">CARREGANDO</div></header>
+  <main>
+    <section class="summary" aria-label="Resumo">
+      <article><span>Versão</span><strong id="versao">—</strong></article>
+      <article><span>Fila</span><strong id="fila">—</strong></article>
+      <article><span>Impressoras</span><strong id="totalImpressoras">—</strong></article>
+      <article><span>Sistema</span><strong id="sistema">—</strong></article>
+    </section>
+    <nav><button class="active" data-tab="impressoras">Impressoras</button><button data-tab="trabalhos">Trabalhos</button><button data-tab="historico">Histórico</button><button data-tab="logs">Logs</button></nav>
+    <section id="impressoras" class="panel tab"><div class="title"><div><h2>Impressoras configuradas</h2><p>Dispositivos encontrados pelo sistema operacional.</p></div><button class="refresh" data-action="impressoras">Atualizar</button></div><div id="listaImpressoras" class="cards"></div></section>
+    <section id="trabalhos" class="panel tab hidden"><div class="title"><div><h2>Trabalhos atuais</h2><p>Fila operacional em memória.</p></div><button class="refresh" data-action="trabalhos">Atualizar</button></div><div id="listaTrabalhos"></div></section>
+    <section id="historico" class="panel tab hidden"><div class="title"><div><h2>Histórico</h2><p>Últimos trabalhos finalizados.</p></div><button class="refresh" data-action="historico">Atualizar</button></div><div id="listaHistorico"></div></section>
+    <section id="logs" class="panel tab hidden"><div class="title"><div><h2>Log da aplicação</h2><p>Últimas 300 linhas; o conteúdo dos documentos não é exibido.</p></div><button class="refresh" data-action="logs">Atualizar</button></div><pre id="conteudoLog">Carregando…</pre></section>
+    <p id="erro" role="alert"></p>
+  </main>
+  <script src="/printAgent/app.js"></script>
+</body>
+</html>

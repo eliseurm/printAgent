@@ -1,0 +1,21 @@
+{
+  "impressora": {
+    "nome": "ElginL42"
+  },
+  "configuracoesImpressao": {
+    "PageSize": "w100h60",
+    "PrintDarkness": "20",
+    "PrintSpeed": "4",
+    "Orientation": "0"
+  },
+  "trabalho": {
+    "nome": "Etiqueta Patrimônio",
+    "copias": 1,
+    "sincrono": false
+  },
+  "documento": {
+    "tipoConteudo": "application/zpl",
+    "codificacao": "utf-8",
+    "conteudo": "^XA\n^PW800\n^LL480\n^LH0,0\n^FO30,30\n^A0N,40,40\n^FDPATRIMONIO^FS\n^FO30,90\n^A0N,30,30\n^FDNumero: 123456^FS\n^FO30,145\n^BY2,2,80\n^BCN,80,Y,N,N\n^FD123456^FS\n^FO610,30\n^BQN,2,6\n^FDQA,123456^FS\n^XZ"
+  }
+}
