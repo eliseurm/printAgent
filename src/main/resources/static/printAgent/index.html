@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Print Agent</title>
   <link rel="stylesheet" href="/printAgent/app.css">
+  <link rel="stylesheet" href="/printAgent/manual.css">
 </head>
 <body>
   <header><div><span class="eyebrow">ADMINISTRAÇÃO LOCAL</span><h1>Print Agent</h1></div><div id="estado" class="pill">CARREGANDO</div></header>
@@ -15,11 +16,45 @@
       <article><span>Impressoras</span><strong id="totalImpressoras">—</strong></article>
       <article><span>Sistema</span><strong id="sistema">—</strong></article>
     </section>
-    <nav><button class="active" data-tab="impressoras">Impressoras</button><button data-tab="trabalhos">Trabalhos</button><button data-tab="historico">Histórico</button><button data-tab="logs">Logs</button></nav>
+    <nav><button class="active" data-tab="impressoras">Impressoras</button><button data-tab="trabalhos">Trabalhos</button><button data-tab="historico">Histórico</button><button data-tab="logs">Logs</button><button data-tab="documentacao">Documentação</button><button data-tab="teste">Teste</button></nav>
     <section id="impressoras" class="panel tab"><div class="title"><div><h2>Impressoras configuradas</h2><p>Dispositivos encontrados pelo sistema operacional.</p></div><button class="refresh" data-action="impressoras">Atualizar</button></div><div id="listaImpressoras" class="cards"></div></section>
     <section id="trabalhos" class="panel tab hidden"><div class="title"><div><h2>Trabalhos atuais</h2><p>Fila operacional em memória.</p></div><button class="refresh" data-action="trabalhos">Atualizar</button></div><div id="listaTrabalhos"></div></section>
     <section id="historico" class="panel tab hidden"><div class="title"><div><h2>Histórico</h2><p>Últimos trabalhos finalizados.</p></div><button class="refresh" data-action="historico">Atualizar</button></div><div id="listaHistorico"></div></section>
     <section id="logs" class="panel tab hidden"><div class="title"><div><h2>Log da aplicação</h2><p>Últimas 300 linhas; o conteúdo dos documentos não é exibido.</p></div><button class="refresh" data-action="logs">Atualizar</button></div><pre id="conteudoLog">Carregando…</pre></section>
+    <section id="documentacao" class="panel tab hidden manual">
+      <div class="title"><div><h2>Documentação e manual da API</h2><p>Guia rápido da API REST v1 executada neste computador.</p></div></div>
+      <h3>Endereço base</h3><code>http://localhost:18181/api/v1</code>
+      <h3>Como enviar uma impressão</h3><ol><li>Consulte <code>GET /impressoras</code> e copie exatamente o nome da impressora.</li><li>Monte o JSON com impressora, trabalho e documento.</li><li>Envie-o para <code>POST /trabalhos</code> com <code>Content-Type: application/json</code>.</li><li>Use o identificador retornado em <code>GET /trabalhos/{id}</code>.</li></ol>
+      <h3>Tipos de conteúdo</h3><table><thead><tr><th>Tipo</th><th>Codificação</th><th>Observação</th></tr></thead><tbody><tr><td><code>application/zpl</code></td><td><code>utf-8</code></td><td>Enviado sem alterar os comandos.</td></tr><tr><td><code>text/plain</code></td><td><code>utf-8</code></td><td>Envio RAW.</td></tr><tr><td><code>application/pdf</code></td><td><code>base64</code></td><td>Linux; Windows previsto para 1.2.0.</td></tr></tbody></table>
+      <h3>Endpoints</h3><table><thead><tr><th>Método</th><th>Caminho</th><th>Finalidade</th></tr></thead><tbody><tr><td>GET</td><td><code>/status</code></td><td>Estado do agente</td></tr><tr><td>GET</td><td><code>/impressoras</code></td><td>Impressoras instaladas</td></tr><tr><td>POST</td><td><code>/trabalhos</code></td><td>Criar impressão</td></tr><tr><td>GET</td><td><code>/trabalhos</code></td><td>Fila atual</td></tr><tr><td>GET</td><td><code>/historico</code></td><td>Trabalhos finalizados</td></tr><tr><td>GET</td><td><code>/logs</code></td><td>Consultar log</td></tr><tr><td>GET/PUT</td><td><code>/configuracoes</code></td><td>Configurações autorizadas</td></tr></tbody></table>
+      <h3>Respostas e erros</h3><p>As respostas JSON usam <code>sucesso</code>, <code>mensagem</code>, <code>dados</code>, <code>erros</code> e <code>dataHora</code>. Em falhas, consulte <code>erros[].codigo</code>, <code>descricao</code> e <code>campo</code>.</p>
+    </section>
+    <section id="teste" class="panel tab hidden">
+      <div class="title"><div><h2>Teste de impressão por JSON</h2><p>Edite o exemplo, informe uma impressora existente e envie o contrato para a API.</p></div></div>
+      <label for="exemploTeste">Exemplo da API</label>
+      <select id="exemploTeste">
+        <option value="status">GET /status</option>
+        <option value="impressoras">GET /impressoras</option>
+        <option value="criarTrabalho" selected>POST /trabalhos — imprimir</option>
+        <option value="listarTrabalhos">GET /trabalhos — consultar</option>
+        <option value="historico">GET /historico</option>
+        <option value="logs">GET /logs</option>
+        <option value="configuracoes">GET /configuracoes</option>
+      </select>
+      <label id="rotuloJson" for="jsonTeste">JSON para POST /api/v1/trabalhos</label>
+      <textarea id="jsonTeste" spellcheck="false">{
+  "impressora": { "nome": "ElginL42" },
+  "configuracoesImpressao": {},
+  "trabalho": { "nome": "Teste pelo painel", "copias": 1, "sincrono": true },
+  "documento": {
+    "tipoConteudo": "application/zpl",
+    "codificacao": "utf-8",
+    "conteudo": "^XA^FO20,20^A0N,30,30^FDTESTE PRINT AGENT^FS^XZ"
+  }
+}</textarea>
+      <div class="test-actions"><button id="imprimir" class="primary">Imprimir</button><span id="resultadoTeste" aria-live="polite"></span></div>
+      <pre id="respostaTeste" class="response" aria-live="polite">A resposta da API será exibida aqui.</pre>
+    </section>
     <p id="erro" role="alert"></p>
   </main>
   <script src="/printAgent/app.js"></script>

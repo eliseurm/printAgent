@@ -35,6 +35,11 @@ A interface deverá permitir:
 * visualizar logs;
 * verificar atualizações;
 * consultar informações da instalação.
+* consultar documentação e manual de uso da API;
+* editar e enviar um JSON de teste para impressão;
+* selecionar exemplos dos principais endpoints e visualizar o JSON correspondente;
+* exibir a resposta HTTP formatada abaixo do botão de teste;
+* direcionar o operador aos logs quando o teste falhar.
 
 A interface não deverá possuir regras de negócio próprias.
 

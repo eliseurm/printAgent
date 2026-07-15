@@ -454,6 +454,12 @@ As limitações da versão 1.0.0 permanecerão, salvo correção expressamente r
 * Consulta visual das impressoras e seus estados.
 * Consulta visual dos trabalhos atuais e do histórico.
 * Visualização das últimas linhas do log.
+* Aba de documentação com manual prático da API v1.
+* Aba de teste com JSON editável e envio real para `POST /trabalhos`.
+* Seletor de exemplos para status, impressoras, criação e consulta de trabalhos,
+  histórico, logs e configurações.
+* Exibição formatada da resposta HTTP logo abaixo do botão de execução.
+* Registro no log de erros de validação, API, Provider e impressão.
 * Atualização periódica do status quando a página está visível.
 * Interface responsiva, offline e sem dependências externas.
 

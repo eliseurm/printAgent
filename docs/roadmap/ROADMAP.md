@@ -432,6 +432,9 @@ Escopo:
 * trabalhos atuais;
 * histórico em memória;
 * últimas linhas do log;
+* documentação e manual prático da API;
+* editor de JSON para teste real de impressão;
+* registro das falhas de teste no log do agente;
 * funcionamento offline e sem dependências externas.
 
 ---
