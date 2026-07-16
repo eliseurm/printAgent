@@ -11,6 +11,7 @@ import javax.print.attribute.standard.PrinterIsAcceptingJobs;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -25,8 +26,32 @@ public class PrinterService {
     public ImpressoraResponseDTO consultar(String nome){PrintService p=encontrar(nome);PrintService d=PrintServiceLookup.lookupDefaultPrintService();return new ImpressoraResponseDTO(p.getName(),d!=null&&d.getName().equals(p.getName()),status(p));}
     public CapacidadesImpressoraResponseDTO capacidades(String nome){
         PrintService p=encontrar(nome); Map<String,List<String>> dados=new TreeMap<>();
-        for(Class<?> categoria:p.getSupportedAttributeCategories()){Object valor=p.getDefaultAttributeValue((Class<? extends Attribute>)categoria);dados.put(categoria.getSimpleName(),valor==null?List.of():List.of(valor.toString()));}
+        for(Class<?> categoria:p.getSupportedAttributeCategories()){
+            Class<? extends Attribute> tipo=(Class<? extends Attribute>)categoria;
+            Object suportados=p.getSupportedAttributeValues(tipo,null,null);
+            List<String> valores=valores(suportados);
+            if(valores.isEmpty()) valores=valores(p.getDefaultAttributeValue(tipo));
+            dados.put(categoria.getSimpleName(),valores);
+        }
         return new CapacidadesImpressoraResponseDTO(nome,dados);
+    }
+    private List<String> valores(Object valor){
+        if(valor==null)return List.of();
+        List<String> resultado=new ArrayList<>();
+        if(valor.getClass().isArray()){
+            int tamanho=Array.getLength(valor);
+            for(int i=0;i<tamanho;i++)adicionar(resultado,Array.get(valor,i));
+        }else if(valor instanceof Collection<?> colecao){
+            colecao.forEach(item->adicionar(resultado,item));
+        }else adicionar(resultado,valor);
+        return resultado.stream().distinct().toList();
+    }
+    private void adicionar(List<String> resultado,Object valor){
+        if(valor==null)return;
+        if(valor.getClass().isArray()){
+            int tamanho=Array.getLength(valor);
+            for(int i=0;i<tamanho;i++)adicionar(resultado,Array.get(valor,i));
+        }else resultado.add(valor.toString());
     }
     public void imprimir(TrabalhoImpressao t) throws Exception {
         PrintService printer=encontrar(t.getImpressora());

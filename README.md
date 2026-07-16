@@ -208,6 +208,68 @@ Crie um arquivo chamado `impressao-zpl.json`:
 
 Substitua `ElginL42` pelo nome retornado pela consulta de impressoras.
 
+### Configurações de impressão da etiqueta
+
+`configuracoesImpressao` contém opções temporárias do trabalho atual. Não existe
+uma lista única de propriedades válida para todas as impressoras: as chaves e os
+valores dependem do sistema operacional, da fila e do driver instalado. O Print
+Agent preserva os nomes originais do driver, sem traduzi-los.
+
+Para descobrir as opções anunciadas por uma impressora, consulte:
+
+```http
+GET /api/v1/impressoras/{nome}/capacidades
+```
+
+Exemplo:
+
+```bash
+curl http://localhost:18181/api/v1/impressoras/ElginL42/capacidades
+```
+
+O campo `dados.configuracoes` da resposta relaciona cada propriedade aos valores
+disponibilizados pelo driver. Utilize exatamente a grafia retornada. Exemplos
+comuns são:
+
+| Propriedade | Finalidade | Exemplos de valores |
+| --- | --- | --- |
+| `PageSize` | Tamanho da mídia ou etiqueta | `w100h60`, `A4` |
+| `Orientation` | Orientação | `0`, `1`, `2`, `3`, `Portrait` |
+| `Resolution` | Resolução | `203dpi`, `300dpi` |
+| `PrintSpeed` | Velocidade de impressão | `2`, `3`, `4` |
+| `PrintDarkness` | Densidade ou intensidade térmica | `0`, `10`, `20` |
+| `MediaMethod` | Método de mídia | valor definido pelo driver |
+| `PaperType` | Tipo de papel ou mídia | valor definido pelo driver |
+| `MirrorImage` | Impressão espelhada | valor definido pelo driver |
+| `NegativeImage` | Impressão negativa | valor definido pelo driver |
+
+Essa lista não é fechada. Opções específicas do fabricante também podem ser
+enviadas quando forem suportadas pela fila. Por exemplo:
+
+```json
+"configuracoesImpressao": {
+  "PageSize": "w100h60",
+  "PrintDarkness": "20",
+  "PrintSpeed": "4",
+  "Orientation": "0"
+}
+```
+
+Regras importantes:
+
+- todas as chaves e todos os valores devem ser strings JSON; use `"20"`, e não `20`;
+- as opções valem somente para o trabalho enviado e não alteram o padrão permanente da impressora;
+- o tamanho da etiqueta não é convertido pelo agente: envie o valor exato anunciado pelo driver;
+- `trabalho.copias` define o número de cópias e não deve ser repetido em `configuracoesImpressao`;
+- ao enviar `{}` ou omitir `configuracoesImpressao`, são usados os padrões atuais da fila;
+- uma propriedade aceita no JSON pode não ser suportada pelo driver ou pelo provider em uso.
+
+Na implementação atual, as opções são encaminhadas ao comando `lp` na impressão
+de PDF no Linux. Nos trabalhos ZPL e `text/plain`, o envio é RAW pelo Java Print
+Service e `configuracoesImpressao` ainda não é convertido em atributos do trabalho;
+nesses formatos, tamanho, densidade e velocidade normalmente devem estar no
+próprio ZPL ou ser configurados na fila/driver.
+
 Linux:
 
 ```bash
@@ -457,4 +519,3 @@ Para detalhes completos, consulte:
 - [`docs/api/JSON.md`](docs/api/JSON.md);
 - [`docs/web/WEBUI.md`](docs/web/WEBUI.md);
 - [`docs/instalacao/INSTALACAO.md`](docs/instalacao/INSTALACAO.md).
-
