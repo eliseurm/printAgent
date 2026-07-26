@@ -17,7 +17,7 @@ print-agent:
   impressao:
     configuracoes-desconhecidas: IGNORAR
   cors:
-    origens-permitidas: [localhost, 127.0.0.1]
+    origens-permitidas: ["*"]
   atualizacao:
     habilitada: false
     verificar-ao-iniciar: false
