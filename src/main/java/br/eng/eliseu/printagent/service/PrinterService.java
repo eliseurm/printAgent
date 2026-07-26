@@ -57,6 +57,7 @@ public class PrinterService {
         PrintService printer=encontrar(t.getImpressora());
         byte[] bytes=conteudo(t);
         if("application/pdf".equals(t.getTipoConteudo())){imprimirPdfLinux(t,bytes);return;}
+        if(isLinux()){imprimirRawLinux(t,bytes);return;}
         DocPrintJob job=printer.createPrintJob();
         for(int i=0;i<t.getCopias();i++) job.print(new SimpleDoc(bytes,DocFlavor.BYTE_ARRAY.AUTOSENSE,null),null);
     }
@@ -70,8 +71,25 @@ public class PrinterService {
     private void imprimirPdfLinux(TrabalhoImpressao t,byte[] bytes) throws Exception {
         if(!System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("linux")) throw new ApiException(HttpStatus.UNSUPPORTED_MEDIA_TYPE,"TIPO_CONTEUDO_NAO_SUPORTADO_PELO_PROVIDER","PDF não é suportado pelo Provider Windows na versão 1.0.0.","documento.tipoConteudo");
         Path arquivo=Files.createTempFile("print-agent-",".pdf");
-        try{Files.write(arquivo,bytes,StandardOpenOption.TRUNCATE_EXISTING);List<String> cmd=new ArrayList<>(List.of("lp","-d",t.getImpressora()));t.getConfiguracoes().forEach((k,v)->{cmd.add("-o");cmd.add(k+"="+v);});cmd.add(arquivo.toString());Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();if(!p.waitFor(properties.getProvider().getTimeoutComandoSegundos(),TimeUnit.SECONDS)){p.destroyForcibly();throw new IOException("Timeout ao executar lp.");}if(p.exitValue()!=0)throw new IOException(new String(p.getInputStream().readAllBytes(),StandardCharsets.UTF_8));}finally{Files.deleteIfExists(arquivo);}
+        try{Files.write(arquivo,bytes,StandardOpenOption.TRUNCATE_EXISTING);executarLp(comandoLp(t,arquivo,false));}finally{Files.deleteIfExists(arquivo);}
     }
+    private void imprimirRawLinux(TrabalhoImpressao t,byte[] bytes) throws Exception {
+        Path arquivo=Files.createTempFile("print-agent-raw-",".bin");
+        try{Files.write(arquivo,bytes,StandardOpenOption.TRUNCATE_EXISTING);executarLp(comandoLp(t,arquivo,true));}finally{Files.deleteIfExists(arquivo);}
+    }
+    List<String> comandoLp(TrabalhoImpressao t,Path arquivo,boolean raw){
+        List<String> cmd=new ArrayList<>(List.of("lp","-d",t.getImpressora(),"-n",String.valueOf(t.getCopias())));
+        if(raw){cmd.add("-o");cmd.add("raw");}
+        t.getConfiguracoes().forEach((k,v)->{cmd.add("-o");cmd.add(k+"="+v);});
+        cmd.add(arquivo.toString());
+        return cmd;
+    }
+    private void executarLp(List<String> cmd) throws Exception {
+        Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();
+        if(!p.waitFor(properties.getProvider().getTimeoutComandoSegundos(),TimeUnit.SECONDS)){p.destroyForcibly();throw new IOException("Timeout ao executar lp.");}
+        if(p.exitValue()!=0)throw new IOException(new String(p.getInputStream().readAllBytes(),StandardCharsets.UTF_8));
+    }
+    private boolean isLinux(){return System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("linux");}
     private PrintService encontrar(String nome){return Arrays.stream(PrintServiceLookup.lookupPrintServices(null,null)).filter(p->p.getName().equals(nome)).findFirst().orElseThrow(()->new ApiException(HttpStatus.NOT_FOUND,"IMPRESSORA_NAO_ENCONTRADA","A impressora '"+nome+"' não está instalada.","impressora.nome"));}
     private String status(PrintService p){PrinterIsAcceptingJobs a=p.getAttribute(PrinterIsAcceptingJobs.class);return PrinterIsAcceptingJobs.NOT_ACCEPTING_JOBS.equals(a)?"STOPPED":"READY";}
 }
