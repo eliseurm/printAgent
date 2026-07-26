@@ -1,0 +1,53 @@
+Considerando a L42 PRO FULL em 203 dpi, a conversão aproximada é 8 pontos por mm. Assim, uma etiqueta de 60 mm corresponde a 480 pontos.
+
+   Configuração da tela                     ZPL aproximado    Observação
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Método: Térmico direto                   ^MTD              D = térmico direto
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Modo: Rasgar                             ^MMT              T = tear-off/rasgar
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Altura: 60 mm                            ^LL480            60 × 8 pontos
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Etiqueta: Gap transmissivo               ^MNY              Mídia não contínua com detecção do espaço
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Posição rasgar: 0                        ~TA000            Aceita deslocamento positivo ou negativo
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Comprimento máximo calibração: 180 mm    ^ML1440           180 × 8 pontos
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Ação ao ligar: Feed                      ^MFF,F            Primeiro F: ligar; segundo F: fechar tampa
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Ação ao fechar tampa: Feed               ^MFF,F            Configurada junto da ação ao ligar
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Offset de coluna: -50                    ^LS-50            Deslocamento horizontal
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Offset de linha: 0                       ^LT0              Deslocamento vertical
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Velocidade                               ^PR4              Exemplo: 4 polegadas por segundo
+  ───────────────────────────────────────  ────────────────  ────────────────────────────────────────────
+   Aquecimento/densidade                    ~SD20             Exemplo de densidade 20
+
+  Essas correspondências são baseadas no padrão ZPL: ^MT, ^MM, ^MN, ^LL, ^ML, ^MF, ^LS, ^LT, ^PR, ~SD e ~TA. A própria documentação ressalta que os valores
+  disponíveis dependem do modelo da impressora. Referência de configurações ZPL
+  (https://docs.zebra.com/us/en/printers/desktop/zd888ta-zd230ta/zpl-configuration/configuration-setting-to-command-cross-reference.html), comando ^MF
+  (https://docs.zebra.com/us/en/printers/software/zpl-pg/zpl-commands/%5Emf.html), comando ^MM
+  (https://docs.zebra.com/us/en/printers/software/zpl-pg/zpl-commands/%5Emm.html).
+
+  Um conteúdo completo poderia ser:
+
+  ^XA
+  ^MTD
+  ^MMT
+  ^MNY
+  ^LL480
+  ^ML1440
+  ~TA000
+  ^LS-50
+  ^LT0
+  ^PR4
+  ~SD20
+
+  ^FO20,20
+  ^A0N,30,30
+  ^FDTESTE PRINT AGENT^FS
+
+  ^XZ

@@ -9,4 +9,9 @@ public class WebPageController {
     public String painel() {
         return "forward:/printAgent/index.html";
     }
+
+    @GetMapping("/favicon.ico")
+    public String favicon() {
+        return "redirect:/printAgent/favicon.svg";
+    }
 }
