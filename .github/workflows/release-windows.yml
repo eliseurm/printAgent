@@ -30,8 +30,15 @@ jobs:
         id: project
         shell: pwsh
         run: |
-          $version = (mvn help:evaluate -Dexpression=project.version -q -DforceStdout).Trim()
-          $finalName = (mvn help:evaluate -Dexpression=project.build.finalName -q -DforceStdout).Trim()
+          $version = (& mvn help:evaluate '-Dexpression=project.version' '-q' '-DforceStdout').Trim()
+          if ($LASTEXITCODE -ne 0) {
+            throw 'O Maven falhou ao determinar project.version.'
+          }
+
+          $finalName = (& mvn help:evaluate '-Dexpression=project.build.finalName' '-q' '-DforceStdout').Trim()
+          if ($LASTEXITCODE -ne 0) {
+            throw 'O Maven falhou ao determinar project.build.finalName.'
+          }
 
           if ($version -notmatch '^\d+\.\d+\.\d+$') {
             throw "A versao Maven '$version' nao segue MAJOR.MINOR.PATCH."

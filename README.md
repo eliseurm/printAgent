@@ -23,6 +23,31 @@ Depois de iniciar o Print Agent, utilize:
 
 O Print Agent aceita conexões somente do próprio computador. Ele não fica acessível para outros computadores da rede.
 
+## Instalador Windows
+
+O instalador `.exe` para Windows x64 está disponível na página de Releases do
+projeto:
+
+<https://github.com/eliseurm/printAgent/releases>
+
+Abra a versão desejada e, na seção **Assets**, baixe o arquivo com o padrão:
+
+```text
+PrintAgent-VERSAO-Windows-x64.exe
+```
+
+Exemplo:
+
+```text
+PrintAgent-1.0.3-Windows-x64.exe
+```
+
+O instalador inclui um runtime Java próprio. Portanto, o usuário final não
+precisa instalar Java, JRE, JDK ou Maven. O mesmo `.exe` também fica disponível
+temporariamente como artifact da execução correspondente na aba
+[Actions](https://github.com/eliseurm/printAgent/actions), com o nome
+`PrintAgent-Windows-VERSAO`.
+
 ## Requisitos
 
 Antes de começar, verifique:
@@ -518,4 +543,5 @@ Para detalhes completos, consulte:
 - [`docs/api/API.md`](docs/api/API.md);
 - [`docs/api/JSON.md`](docs/api/JSON.md);
 - [`docs/web/WEBUI.md`](docs/web/WEBUI.md);
-- [`docs/instalacao/INSTALACAO.md`](docs/instalacao/INSTALACAO.md).
+- [`docs/instalacao/INSTALACAO.md`](docs/instalacao/INSTALACAO.md);
+- [`docs/release-windows.md`](docs/release-windows.md).
