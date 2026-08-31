@@ -20,13 +20,14 @@ class PrinterServiceTest {
                 "Etiqueta", "ElginL42", "application/zpl", "utf-8", "^XA^XZ",
                 2, Map.of("PageSize", "w100h60"));
 
-        List<String> comando = service.comandoLp(trabalho, Path.of("/tmp/etiqueta.bin"), true);
+        Path arquivo = Path.of("/tmp/etiqueta.bin");
+        List<String> comando = service.comandoLp(trabalho, arquivo, true);
 
         assertThat(comando).containsExactly(
                 "lp", "-d", "ElginL42", "-n", "2",
                 "-o", "raw",
                 "-o", "PageSize=w100h60",
-                "/tmp/etiqueta.bin");
+                arquivo.toString());
     }
 
     @Test
@@ -35,9 +36,10 @@ class PrinterServiceTest {
                 "Documento", "ElginL42", "application/pdf", "base64", "JVBERi0=",
                 1, Map.of());
 
-        List<String> comando = service.comandoLp(trabalho, Path.of("/tmp/documento.pdf"), false);
+        Path arquivo = Path.of("/tmp/documento.pdf");
+        List<String> comando = service.comandoLp(trabalho, arquivo, false);
 
         assertThat(comando).containsExactly(
-                "lp", "-d", "ElginL42", "-n", "1", "/tmp/documento.pdf");
+                "lp", "-d", "ElginL42", "-n", "1", arquivo.toString());
     }
 }
