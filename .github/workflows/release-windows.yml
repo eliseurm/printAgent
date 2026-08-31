@@ -1,0 +1,142 @@
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    name: Instalador Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Obter o codigo-fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar Eclipse Temurin JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Descobrir e validar a versao
+        id: project
+        shell: pwsh
+        run: |
+          $version = (mvn help:evaluate -Dexpression=project.version -q -DforceStdout).Trim()
+          $finalName = (mvn help:evaluate -Dexpression=project.build.finalName -q -DforceStdout).Trim()
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "A versao Maven '$version' nao segue MAJOR.MINOR.PATCH."
+          }
+          if ([string]::IsNullOrWhiteSpace($finalName)) {
+            throw "Nao foi possivel determinar project.build.finalName."
+          }
+
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $tag = '${{ github.ref_name }}'
+            if ($tag -notmatch '^v\d+\.\d+\.\d+$') {
+              throw "A tag '$tag' nao segue vMAJOR.MINOR.PATCH."
+            }
+            $tagVersion = $tag.Substring(1)
+            if ($tagVersion -ne $version) {
+              throw "A tag '$tag' diverge da versao '$version' do pom.xml."
+            }
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "jar_name=$finalName.jar" >> $env:GITHUB_OUTPUT
+          "APP_VERSION=$version" >> $env:GITHUB_ENV
+          "JAR_NAME=$finalName.jar" >> $env:GITHUB_ENV
+
+      - name: Testar e gerar o JAR executavel
+        run: mvn -B clean package
+
+      - name: Preparar entrada do jpackage
+        shell: pwsh
+        run: |
+          $jar = Join-Path 'target' $env:JAR_NAME
+          if (-not (Test-Path -LiteralPath $jar -PathType Leaf)) {
+            throw "JAR executavel nao encontrado: $jar"
+          }
+          New-Item -ItemType Directory -Force -Path 'build\jpackage-input', 'build\installer' | Out-Null
+          Copy-Item -LiteralPath $jar -Destination 'build\jpackage-input\'
+
+      - name: Instalar e verificar WiX Toolset 3
+        shell: pwsh
+        run: |
+          choco install wixtoolset --version=3.14.1 --yes --no-progress
+          $wixBin = Get-ChildItem 'C:\Program Files (x86)\WiX Toolset v3*\bin' -Directory |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if (-not $wixBin) {
+            throw 'WiX Toolset 3 nao foi encontrado depois da instalacao.'
+          }
+          $wixBin.FullName >> $env:GITHUB_PATH
+          & (Join-Path $wixBin.FullName 'candle.exe') '-?'
+          if ($LASTEXITCODE -ne 0) { throw 'candle.exe do WiX nao esta funcional.' }
+          & (Join-Path $wixBin.FullName 'light.exe') '-?'
+          if ($LASTEXITCODE -ne 0) { throw 'light.exe do WiX nao esta funcional.' }
+
+      - name: Gerar instalador autocontido
+        shell: pwsh
+        run: |
+          jpackage `
+            --type exe `
+            --name PrintAgent `
+            --app-version "$env:APP_VERSION" `
+            --input 'build\jpackage-input' `
+            --main-jar "$env:JAR_NAME" `
+            --dest 'build\installer' `
+            --vendor 'Eliseu Engenharia' `
+            --description 'Print Agent' `
+            --add-modules ALL-MODULE-PATH `
+            --java-options '-Dfile.encoding=UTF-8' `
+            --win-menu `
+            --win-menu-group 'Print Agent' `
+            --win-shortcut `
+            --win-dir-chooser `
+            --win-per-user-install
+
+      - name: Validar e padronizar o instalador
+        id: installer
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem 'build\installer' -Filter '*.exe' -File)
+          if ($installers.Count -ne 1) {
+            throw "Era esperado exatamente um instalador .exe; encontrados: $($installers.Count)."
+          }
+          $expectedName = "PrintAgent-$env:APP_VERSION-Windows-x64.exe"
+          $expectedPath = Join-Path 'build\installer' $expectedName
+          Move-Item -LiteralPath $installers[0].FullName -Destination $expectedPath
+          if (-not (Test-Path -LiteralPath $expectedPath -PathType Leaf)) {
+            throw "Instalador esperado nao encontrado: $expectedPath"
+          }
+          "path=$expectedPath" >> $env:GITHUB_OUTPUT
+
+      - name: Publicar artifact do workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrintAgent-Windows-${{ steps.project.outputs.version }}
+          path: ${{ steps.installer.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Criar GitHub Release
+        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+            '${{ steps.installer.outputs.path }}' `
+            --verify-tag `
+            --generate-notes `
+            --title "Print Agent $env:APP_VERSION"
