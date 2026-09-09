@@ -8,5 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @SpringBootApplication
 @EnableConfigurationProperties(PrintAgentProperties.class)
 public class PrintAgentApplication {
-    public static void main(String[] args) { SpringApplication.run(PrintAgentApplication.class, args); }
+    public static void main(String[] args) {
+        SpringApplication.run(PrintAgentApplication.class, args);
+    }
 }

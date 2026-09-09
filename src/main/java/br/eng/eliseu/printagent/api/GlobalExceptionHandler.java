@@ -17,6 +17,7 @@ import java.util.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ApiException.class)
     ResponseEntity<EnvelopeRespostaDTO<Map<String, Object>>> api(ApiException e) {
         log.warn("Requisição rejeitada [{}] campo={}: {}", e.getCodigo(), e.getCampo(), e.getMessage());
