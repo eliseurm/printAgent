@@ -20,19 +20,7 @@ public class TrabalhoService {
     public TrabalhoService(PrinterService printers,PrintAgentProperties props){this.printers=printers;this.props=props;}
     @PostConstruct void iniciar(){consumidor=new Thread(this::consumir,"print-agent-queue");consumidor.setDaemon(true);consumidor.start();}
     @PreDestroy void parar(){ativo=false;consumidor.interrupt();}
-    public TrabalhoImpressao criar(TrabalhoImpressaoRequestDTO r){validar(r);String conteudo="application/zpl".equals(r.documento().tipoConteudo())?normalizarZpl(r.documento().conteudo()):r.documento().conteudo();TrabalhoImpressao t=new TrabalhoImpressao(r.trabalho().nome(),r.impressora().nome(),r.documento().tipoConteudo(),r.documento().codificacao(),conteudo,r.trabalho().copias(),r.configuracoesImpressao());t.status(StatusTrabalho.VALIDADO);atuais.put(t.getId(),t);t.status(StatusTrabalho.NA_FILA);fila.add(t);return t;}
-    static String normalizarZpl(String conteudo){
-        StringBuilder resultado=new StringBuilder(conteudo.length());
-        boolean dadosDoCampo=false;
-        for(int i=0;i<conteudo.length();i++){
-            if(conteudo.startsWith("^FD",i)){resultado.append("^FD");dadosDoCampo=true;i+=2;continue;}
-            if(dadosDoCampo&&conteudo.startsWith("^FS",i)){resultado.append("^FS");dadosDoCampo=false;i+=2;continue;}
-            char caractere=conteudo.charAt(i);
-            if(!dadosDoCampo&&Character.isWhitespace(caractere))continue;
-            resultado.append(caractere);
-        }
-        return resultado.toString();
-    }
+    public TrabalhoImpressao criar(TrabalhoImpressaoRequestDTO r){validar(r);TrabalhoImpressao t=new TrabalhoImpressao(r.trabalho().nome(),r.impressora().nome(),r.documento().tipoConteudo(),r.documento().codificacao(),r.documento().conteudo(),r.trabalho().copias(),r.configuracoesImpressao());t.status(StatusTrabalho.VALIDADO);atuais.put(t.getId(),t);t.status(StatusTrabalho.NA_FILA);fila.add(t);return t;}
     private void validar(TrabalhoImpressaoRequestDTO r){printers.consultar(r.impressora().nome());String tipo=r.documento().tipoConteudo(),cod=r.documento().codificacao();int bytes;
         if("application/pdf".equals(tipo)){if(!"base64".equalsIgnoreCase(cod))invalido("CODIFICACAO_INVALIDA","PDF exige codificação base64.","documento.codificacao");try{bytes=Base64.getDecoder().decode(r.documento().conteudo()).length;}catch(IllegalArgumentException e){invalido("CONTEUDO_INVALIDO","PDF Base64 inválido.","documento.conteudo");return;}if(bytes>props.getLimites().getPdfMaximoBytes())grande();}
         else if("application/zpl".equals(tipo)||"text/plain".equals(tipo)){if(!"utf-8".equalsIgnoreCase(cod))invalido("CODIFICACAO_INVALIDA","O conteúdo exige codificação utf-8.","documento.codificacao");bytes=r.documento().conteudo().getBytes(StandardCharsets.UTF_8).length;int max="application/zpl".equals(tipo)?props.getLimites().getZplMaximoBytes():props.getLimites().getRawMaximoBytes();if(bytes>max)grande();}

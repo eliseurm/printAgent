@@ -80,7 +80,10 @@ public class PrinterService {
     List<String> comandoLp(TrabalhoImpressao t,Path arquivo,boolean raw){
         List<String> cmd=new ArrayList<>(List.of("lp","-d",t.getImpressora(),"-n",String.valueOf(t.getCopias())));
         if(raw){cmd.add("-o");cmd.add("raw");}
-        t.getConfiguracoes().forEach((k,v)->{cmd.add("-o");cmd.add(k+"="+v);});
+        // ZPL chega pronto do cliente: nenhuma opção de driver deve alterar sua impressão.
+        if (!"application/zpl".equals(t.getTipoConteudo())) {
+            t.getConfiguracoes().forEach((k,v)->{cmd.add("-o");cmd.add(k+"="+v);});
+        }
         cmd.add(arquivo.toString());
         return cmd;
     }

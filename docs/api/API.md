@@ -19,6 +19,19 @@
 
 ---
 
+## Encaminhamento de ZPL
+
+Para `application/zpl`, o agente preserva integralmente os bytes UTF-8 do
+conteúdo recebido, incluindo espaços e quebras de linha. Não interpreta,
+compacta, corrige nem acrescenta comandos. O sistema cliente deve enviar o ZPL
+pronto, com tamanho, posição, orientação e demais ajustes já definidos.
+
+Envie `configuracoesImpressao: {}` ou omita essa propriedade para ZPL.
+Valores recebidos nesse mapa são ignorados para ZPL em todos os providers,
+inclusive Linux/CUPS; não são convertidos em comandos nem em opções do driver.
+Nome da impressora e quantidade de cópias continuam definindo o encaminhamento.
+O comportamento dos demais tipos de documento permanece independente.
+
 # 1. Objetivo
 
 Este documento especifica os endpoints REST disponibilizados pelo Print Agent.
@@ -326,12 +339,7 @@ O Controller não deverá imprimir diretamente.
     "impressora": {
         "nome": "ElginL42"
     },
-    "configuracoesImpressao": {
-        "PageSize": "w100h60",
-        "PrintDarkness": "20",
-        "PrintSpeed": "4",
-        "Orientation": "0"
-    },
+    "configuracoesImpressao": {},
     "trabalho": {
         "nome": "Etiqueta Patrimônio",
         "copias": 2,
@@ -1035,10 +1043,7 @@ Cria um trabalho real de impressão utilizando um conteúdo de teste interno.
         "nome": "ElginL42"
     },
     "tipoTeste": "ZPL",
-    "configuracoesImpressao": {
-        "PageSize": "w100h60",
-        "PrintDarkness": "20"
-    }
+    "configuracoesImpressao": {}
 }
 ```
 
@@ -1551,11 +1556,7 @@ async function imprimirEtiqueta(zpl) {
         impressora: {
             nome: "ElginL42"
         },
-        configuracoesImpressao: {
-            PageSize: "w100h60",
-            PrintDarkness: "20",
-            PrintSpeed: "4"
-        },
+        configuracoesImpressao: {},
         trabalho: {
             nome: "Etiqueta Patrimônio",
             copias: 1,

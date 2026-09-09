@@ -2,12 +2,7 @@
   "impressora": {
     "nome": "ElginL42"
   },
-  "configuracoesImpressao": {
-    "PageSize": "w100h60",
-    "PrintDarkness": "20",
-    "PrintSpeed": "4",
-    "Orientation": "0"
-  },
+  "configuracoesImpressao": {},
   "trabalho": {
     "nome": "Etiqueta Patrimônio",
     "copias": 1,

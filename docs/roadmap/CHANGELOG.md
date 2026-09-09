@@ -16,6 +16,18 @@
 
 ---
 
+## Alterações ainda não publicadas
+
+- Removida a normalização do ZPL no agente: espaços, quebras de linha e dados
+  são preservados integralmente até o provider de impressão.
+- Trabalhos ZPL no Linux não repassam `configuracoesImpressao` ao CUPS, assim
+  como já ocorria no Windows. Impressora, cópias e transporte RAW são mantidos.
+- Clientes que dependiam da compactação devem fazê-la antes do envio. No
+  sistema Presente, a compactação ocorre ao final da geração no backend,
+  depois dos ajustes, preservando os dados dos campos e os templates originais.
+- Atualizar o Presente antes de distribuir esta correção do agente para manter
+  a compactação utilizada nas etiquetas existentes.
+
 # 1. Objetivo
 
 Este documento registra as alterações realizadas no Print Agent ao longo de suas versões.

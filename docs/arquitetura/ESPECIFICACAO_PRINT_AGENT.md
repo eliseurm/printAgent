@@ -4280,7 +4280,11 @@ O agente não deverá:
 * adicionar comandos `^XA` ou `^XZ`;
 * corrigir comandos inválidos.
 
-O sistema cliente é responsável por gerar ZPL completo e válido.
+O sistema cliente é responsável por gerar ZPL completo e válido, inclusive
+qualquer normalização de espaços e quebras de linha. O agente deve preservar
+integralmente os bytes UTF-8 recebidos. Para `application/zpl`, o mapa
+`configuracoesImpressao` é ignorado também no CUPS: nenhuma opção de tamanho,
+escala, orientação ou ajuste do driver deve ser aplicada ao trabalho ZPL.
 
 ---
 
