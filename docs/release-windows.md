@@ -10,7 +10,7 @@ Na branch `main`, com o repositório sincronizado e sem alterações locais,
 execute na raiz do projeto:
 
 ```bash
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 O script lê a versão do Maven, incrementa automaticamente o PATCH, atualiza o

@@ -11,7 +11,7 @@ Ao final do processo deverá existir no GitHub uma **Release** contendo um insta
 Também deve ser criado o script:
 
 ```text
-gitHub/scriptAtualizacaoGitHub.sh
+utils/scriptAtualizacaoGitHub.sh
 ```
 
 Esse script será executado manualmente pelo desenvolvedor no Linux e será responsável por:
@@ -424,7 +424,7 @@ gh release create "${{ github.ref_name }}" `
 Criar obrigatoriamente:
 
 ```text
-gitHub/scriptAtualizacaoGitHub.sh
+utils/scriptAtualizacaoGitHub.sh
 ```
 
 O script será executado em Linux.
@@ -450,7 +450,7 @@ O script deve ser robusto e interromper imediatamente caso qualquer etapa obriga
 Cada execução bem-sucedida de:
 
 ```bash
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 deve gerar uma NOVA versão.
@@ -866,7 +866,7 @@ Garantir que o script fique executável.
 Executar:
 
 ```bash
-chmod +x gitHub/scriptAtualizacaoGitHub.sh
+chmod +x utils/scriptAtualizacaoGitHub.sh
 ```
 
 O bit de execução deve ser registrado no Git.
@@ -878,7 +878,7 @@ O bit de execução deve ser registrado no Git.
 O fluxo do desenvolvedor deverá ser simplesmente:
 
 ```bash
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 Não exigir que o desenvolvedor informe manualmente a próxima versão.
@@ -1104,7 +1104,7 @@ Documentar pelo menos:
 ```text
 Como publicar nova versão:
 
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 Explicar que:
@@ -1130,7 +1130,7 @@ No mínimo deverão existir:
 └── workflows/
     └── release-windows.yml
 
-gitHub/
+utils/
 └── scriptAtualizacaoGitHub.sh
 ```
 
@@ -1322,7 +1322,7 @@ Não fazer o projeto depender do `jpackage` para execução normal em desenvolvi
 A implementação só estará concluída quando o fluxo conceitual for:
 
 ```bash
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 e isso gerar:
@@ -1388,7 +1388,7 @@ O arquivo disponibilizado ao usuário final deverá executar sem necessidade de 
 Antes de encerrar a tarefa, conferir obrigatoriamente:
 
 * [ ] `.github/workflows/release-windows.yml` criado;
-* [ ] `gitHub/scriptAtualizacaoGitHub.sh` criado;
+* [ ] `utils/scriptAtualizacaoGitHub.sh` criado;
 * [ ] script executável;
 * [ ] Java 17 utilizado no build;
 * [ ] runner Windows utilizado;
@@ -1433,7 +1433,7 @@ Ao concluir, apresentar:
 5. conteúdo completo de:
 
 ```text
-gitHub/scriptAtualizacaoGitHub.sh
+utils/scriptAtualizacaoGitHub.sh
 ```
 
 6. qualquer alteração realizada no:
@@ -1451,7 +1451,7 @@ pom.xml
 8. instrução exata para publicação:
 
 ```bash
-./gitHub/scriptAtualizacaoGitHub.sh
+./utils/scriptAtualizacaoGitHub.sh
 ```
 
 9. exemplo do resultado esperado:
@@ -1471,4 +1471,3 @@ PrintAgent-1.0.3-Windows-x64.exe
 Não apenas explicar como fazer.
 
 **Implemente efetivamente os arquivos e alterações no projeto.**
-

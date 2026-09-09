@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Configuracao do repositorio usado para publicar a release.
 readonly REMOTE="origin"
 readonly EXPECTED_BRANCH="main"
 
