@@ -10,7 +10,7 @@
     </parent>
     <groupId>br.eng.eliseu</groupId>
     <artifactId>print-agent</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <name>print-agent</name>
     <properties>
         <java.version>17</java.version>
