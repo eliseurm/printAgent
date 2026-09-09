@@ -16,4 +16,6 @@ class ApiControllerTest {
     @Test void rejeitaJsonInvalido() throws Exception {mvc.perform(post("/api/v1/trabalhos").contentType("application/json").content("{}")) .andExpect(status().isBadRequest()).andExpect(jsonPath("$.sucesso").value(false)).andExpect(jsonPath("$.erros").isArray());}
     @Test void painelEstaDisponivelNaRotaDocumentada() throws Exception {mvc.perform(get("/printAgent")).andExpect(status().isOk()).andExpect(forwardedUrl("/printAgent/index.html"));}
     @Test void painelContemDocumentacaoETeste() throws Exception {mvc.perform(get("/printAgent/index.html")).andExpect(status().isOk()).andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"documentacao\""))).andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"exemploTeste\""))).andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"imprimir\""))).andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"respostaTeste\"")));}
+    @Test void faviconPossuiRotaValida() throws Exception {mvc.perform(get("/favicon.ico")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/printAgent/favicon.svg"));}
+    @Test void recursoInexistenteRetorna404() throws Exception {mvc.perform(get("/recurso-inexistente")).andExpect(status().isNotFound()).andExpect(jsonPath("$.erros[0].codigo").value("RECURSO_NAO_ENCONTRADO"));}
 }

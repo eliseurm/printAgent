@@ -1,0 +1,1474 @@
+# Implementação de Build e Release Windows via GitHub Actions
+
+## Objetivo
+
+Atualizar este projeto para que seja possível gerar e publicar automaticamente uma versão Windows do **Print Agent**, contendo tudo o que é necessário para execução.
+
+O usuário final **não deve precisar instalar Java, JRE, JDK, Maven ou qualquer outra dependência**.
+
+Ao final do processo deverá existir no GitHub uma **Release** contendo um instalador Windows `.exe`.
+
+Também deve ser criado o script:
+
+```text
+gitHub/scriptAtualizacaoGitHub.sh
+```
+
+Esse script será executado manualmente pelo desenvolvedor no Linux e será responsável por:
+
+1. descobrir a versão atual do projeto;
+2. incrementar automaticamente a versão;
+3. atualizar a versão no `pom.xml`;
+4. validar o projeto;
+5. criar commit da nova versão;
+6. enviar as alterações para o GitHub;
+7. criar uma tag Git correspondente à nova versão;
+8. enviar a tag para o GitHub;
+9. disparar, por consequência, o GitHub Actions;
+10. fazer com que o GitHub Actions gere o instalador Windows;
+11. publicar o `.exe` em uma GitHub Release.
+
+---
+
+# 1. Regras gerais
+
+Antes de implementar:
+
+* leia a estrutura atual completa do projeto;
+* leia o `pom.xml`;
+* identifique corretamente o nome final do JAR gerado;
+* identifique a branch principal configurada no repositório;
+* preserve o funcionamento atual do sistema;
+* não altere regras de negócio;
+* não altere APIs existentes sem necessidade;
+* não remova dependências existentes;
+* reutilize a estrutura já existente sempre que possível.
+
+A solução deve funcionar a partir de uma máquina Linux de desenvolvimento, sendo o executável Windows gerado **dentro de um runner Windows do GitHub Actions**.
+
+Não tentar gerar `.exe` Windows localmente no Linux.
+
+---
+
+# 2. Java utilizado pelo projeto
+
+O projeto utiliza:
+
+```text
+Java 17
+```
+
+O build do GitHub Actions deverá usar:
+
+```text
+Eclipse Temurin JDK 17
+```
+
+O JDK será utilizado somente durante o processo de build.
+
+O computador do usuário final **não deverá precisar ter Java instalado**.
+
+---
+
+# 3. Empacotamento Windows
+
+Utilizar:
+
+```text
+jpackage
+```
+
+fornecido pelo JDK 17.
+
+O instalador deverá incorporar um runtime Java próprio.
+
+Não exigir:
+
+```text
+JAVA_HOME
+```
+
+Não exigir Java instalado no Windows.
+
+Não exigir JDK instalado no Windows.
+
+Não exigir JRE instalado no Windows.
+
+O resultado esperado será algo semelhante a:
+
+```text
+PrintAgent-1.0.3.exe
+```
+
+O nome poderá variar ligeiramente caso o `jpackage` determine outro padrão, mas deve sempre ser possível identificar claramente:
+
+* aplicação;
+* versão;
+* plataforma Windows.
+
+---
+
+# 4. GitHub Actions
+
+Criar:
+
+```text
+.github/workflows/release-windows.yml
+```
+
+O workflow deverá ser acionado quando uma tag seguindo o padrão abaixo for enviada:
+
+```text
+v*
+```
+
+Exemplos:
+
+```text
+v1.0.3
+v1.0.4
+v1.1.0
+v2.0.0
+```
+
+Também permitir execução manual com:
+
+```yaml
+workflow_dispatch:
+```
+
+---
+
+# 5. Runner
+
+O build Windows deve obrigatoriamente utilizar:
+
+```yaml
+runs-on: windows-latest
+```
+
+Não gerar o instalador Windows utilizando runner Linux.
+
+---
+
+# 6. Checkout
+
+Utilizar uma versão estável e atual da action oficial:
+
+```yaml
+uses: actions/checkout@v4
+```
+
+---
+
+# 7. Java no GitHub Actions
+
+Configurar Java através de:
+
+```yaml
+uses: actions/setup-java@v5
+```
+
+com:
+
+```yaml
+distribution: temurin
+java-version: '17'
+cache: maven
+```
+
+---
+
+# 8. Build Maven
+
+Executar:
+
+```bash
+mvn -B clean package
+```
+
+Os testes existentes devem ser executados normalmente.
+
+Não utilizar:
+
+```text
+-DskipTests
+```
+
+como comportamento padrão.
+
+Caso algum teste existente esteja quebrado por problema anterior e não relacionado a esta implementação, identificar claramente o problema antes de modificar qualquer teste.
+
+---
+
+# 9. Determinação automática da versão
+
+Não deixar a versão duplicada manualmente dentro do workflow.
+
+O GitHub Actions deve descobrir a versão diretamente do Maven/POM.
+
+Utilizar preferencialmente:
+
+```bash
+mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+```
+
+Exemplo:
+
+```text
+1.0.3
+```
+
+A partir dessa informação, determinar o nome do JAR.
+
+Não assumir permanentemente:
+
+```text
+print-agent-1.0.2.jar
+```
+
+pois a versão será alterada automaticamente.
+
+---
+
+# 10. JAR Spring Boot
+
+O projeto utiliza Spring Boot.
+
+Garantir que o Maven gere um JAR executável através do:
+
+```text
+spring-boot-maven-plugin
+```
+
+Não remover a configuração atual.
+
+O resultado esperado é semelhante a:
+
+```text
+target/print-agent-1.0.3.jar
+```
+
+---
+
+# 11. Diretório temporário para jpackage
+
+Antes de executar o `jpackage`, criar uma estrutura própria para ele.
+
+Exemplo:
+
+```text
+build/
+├── jpackage-input/
+│   └── print-agent-1.0.3.jar
+└── installer/
+```
+
+Copiar somente os arquivos necessários para:
+
+```text
+build/jpackage-input
+```
+
+Não passar todo o diretório `target` indiscriminadamente para o `jpackage`.
+
+---
+
+# 12. WiX Toolset
+
+Verificar o requisito do `jpackage` utilizado no runner Windows para geração de instaladores `.exe`.
+
+Caso necessário, instalar uma versão compatível do WiX Toolset.
+
+Preferir uma implementação previsível e reproduzível.
+
+Não depender silenciosamente de uma versão do WiX eventualmente pré-instalada no runner sem antes verificar sua disponibilidade.
+
+O workflow deve falhar de forma clara caso o ambiente necessário para o `jpackage` não esteja disponível.
+
+---
+
+# 13. Geração do instalador
+
+Utilizar `jpackage` para criar instalador:
+
+```text
+exe
+```
+
+A configuração deve seguir conceitualmente:
+
+```powershell
+jpackage `
+    --type exe `
+    --name PrintAgent `
+    --app-version "$env:APP_VERSION" `
+    --input build\jpackage-input `
+    --main-jar "$env:JAR_NAME" `
+    --dest build\installer `
+    --vendor "Eliseu Engenharia" `
+    --description "Print Agent" `
+    --win-menu `
+    --win-menu-group "Print Agent" `
+    --win-shortcut `
+    --win-dir-chooser `
+    --win-per-user-install
+```
+
+Ajuste nomes somente se necessário de acordo com a estrutura real encontrada no projeto.
+
+Não adicionar:
+
+```text
+--runtime-image
+```
+
+a menos que exista uma necessidade técnica concreta.
+
+O objetivo é permitir que o próprio `jpackage` crie o runtime necessário para distribuir junto com a aplicação.
+
+---
+
+# 14. Runtime Java
+
+O instalador final deve conter um runtime Java próprio.
+
+Depois da instalação, a aplicação deve ser capaz de executar em uma máquina Windows que NÃO possua:
+
+```text
+java
+javac
+JAVA_HOME
+JDK
+JRE
+Maven
+```
+
+instalados globalmente.
+
+Esse requisito é obrigatório.
+
+---
+
+# 15. Artifact do GitHub Actions
+
+Além da GitHub Release, publicar o `.exe` como artifact da própria execução do workflow.
+
+Utilizar:
+
+```yaml
+actions/upload-artifact@v4
+```
+
+Nome sugerido:
+
+```text
+PrintAgent-Windows-1.0.3
+```
+
+Não incluir arquivos de desenvolvimento desnecessários.
+
+---
+
+# 16. GitHub Release
+
+Quando o workflow for acionado através de uma tag, criar automaticamente uma GitHub Release.
+
+Exemplo:
+
+```text
+Tag:
+v1.0.3
+
+Release:
+Print Agent 1.0.3
+```
+
+Anexar o `.exe` gerado à Release.
+
+Preferir utilizar o GitHub CLI já disponível no runner:
+
+```text
+gh release create
+```
+
+utilizando:
+
+```yaml
+GH_TOKEN: ${{ github.token }}
+```
+
+O workflow deverá possuir:
+
+```yaml
+permissions:
+  contents: write
+```
+
+Gerar automaticamente as release notes quando possível.
+
+Exemplo conceitual:
+
+```powershell
+gh release create "${{ github.ref_name }}" `
+    build/installer/*.exe `
+    --verify-tag `
+    --generate-notes `
+    --title "Print Agent $env:APP_VERSION"
+```
+
+---
+
+# 17. Script de atualização
+
+Criar obrigatoriamente:
+
+```text
+gitHub/scriptAtualizacaoGitHub.sh
+```
+
+O script será executado em Linux.
+
+Adicionar:
+
+```bash
+#!/usr/bin/env bash
+```
+
+e:
+
+```bash
+set -euo pipefail
+```
+
+O script deve ser robusto e interromper imediatamente caso qualquer etapa obrigatória falhe.
+
+---
+
+# 18. Incremento automático de versão
+
+Cada execução bem-sucedida de:
+
+```bash
+./gitHub/scriptAtualizacaoGitHub.sh
+```
+
+deve gerar uma NOVA versão.
+
+Por padrão, incrementar automaticamente o número de **PATCH**.
+
+Exemplo:
+
+```text
+Atual:
+1.0.2
+
+Nova:
+1.0.3
+```
+
+Nova execução:
+
+```text
+Atual:
+1.0.3
+
+Nova:
+1.0.4
+```
+
+Nova execução:
+
+```text
+Atual:
+1.0.4
+
+Nova:
+1.0.5
+```
+
+Considerar versionamento semântico:
+
+```text
+MAJOR.MINOR.PATCH
+```
+
+Para este script automático, alterar somente:
+
+```text
+PATCH
+```
+
+Não alterar automaticamente `MAJOR` ou `MINOR`.
+
+---
+
+# 19. Leitura da versão
+
+O script não deve utilizar `grep` frágil diretamente no XML para encontrar a versão se houver uma maneira confiável através do Maven.
+
+Preferir:
+
+```bash
+mvn help:evaluate \
+    -Dexpression=project.version \
+    -q \
+    -DforceStdout
+```
+
+Exemplo:
+
+```bash
+VERSAO_ATUAL="1.0.2"
+```
+
+Separar:
+
+```text
+MAJOR=1
+MINOR=0
+PATCH=2
+```
+
+e gerar:
+
+```text
+NOVA_VERSAO=1.0.3
+```
+
+Validar se a versão encontrada segue:
+
+```text
+número.número.número
+```
+
+antes de continuar.
+
+Caso não siga esse formato, abortar e informar claramente o problema.
+
+---
+
+# 20. Atualização do pom.xml
+
+Preferir utilizar o Maven Versions Plugin, evitando alteração textual insegura do XML.
+
+Exemplo:
+
+```bash
+mvn versions:set \
+    -DnewVersion="$NOVA_VERSAO" \
+    -DgenerateBackupPoms=false
+```
+
+Após atualizar, confirmar através do Maven que a nova versão realmente passou a ser:
+
+```text
+$NOVA_VERSAO
+```
+
+Caso contrário, abortar.
+
+---
+
+# 21. Verificações Git antes de alterar
+
+Antes de atualizar a versão, o script deve confirmar:
+
+### 21.1 Repositório Git
+
+Confirmar que está dentro de um repositório Git.
+
+### 21.2 Branch
+
+Identificar a branch atual.
+
+A publicação deve ocorrer somente a partir da branch principal esperada pelo projeto.
+
+Descobrir a branch principal real do repositório.
+
+Se for:
+
+```text
+main
+```
+
+exigir `main`.
+
+Não assumir `master` sem verificar.
+
+### 21.3 Working tree
+
+Antes de iniciar, verificar:
+
+```bash
+git status --porcelain
+```
+
+Se existirem arquivos modificados, não commitados ou não rastreados relevantes, abortar.
+
+Não misturar alterações do desenvolvedor com o commit automático de release.
+
+Informar algo semelhante a:
+
+```text
+ERRO: existem alterações locais não commitadas.
+Faça commit ou stash antes de gerar uma nova versão.
+```
+
+---
+
+# 22. Atualizar referências remotas
+
+Antes de incrementar a versão executar:
+
+```bash
+git fetch origin
+```
+
+Verificar se a branch local está sincronizada adequadamente com o remoto.
+
+Não criar release sobre uma branch local desatualizada.
+
+Se a branch estiver atrás do remoto, abortar e instruir o usuário a atualizar a branch.
+
+Não executar automaticamente merge complexo.
+
+---
+
+# 23. Verificação de tag
+
+Antes de criar uma nova versão:
+
+```text
+v1.0.3
+```
+
+verificar se a tag já existe local ou remotamente.
+
+Caso exista, abortar.
+
+Nunca sobrescrever uma tag de release existente.
+
+Nunca utilizar:
+
+```bash
+git tag -f
+```
+
+Nunca utilizar:
+
+```bash
+git push --force
+```
+
+---
+
+# 24. Validar o projeto antes da publicação
+
+Depois de alterar a versão no `pom.xml`, mas ANTES de criar commit/tag, executar:
+
+```bash
+mvn clean package
+```
+
+Se o build ou algum teste falhar:
+
+* abortar;
+* não criar tag;
+* não fazer push;
+* não publicar release.
+
+Como o `pom.xml` terá sido alterado localmente, restaurar a versão anterior automaticamente em caso de falha antes do commit, quando isso puder ser feito com segurança.
+
+O script não deve deixar o projeto silenciosamente em um estado intermediário.
+
+---
+
+# 25. Commit automático da nova versão
+
+Se tudo estiver válido:
+
+```bash
+git add pom.xml
+```
+
+Criar commit:
+
+```text
+Release 1.0.3
+```
+
+Exemplo:
+
+```bash
+git commit -m "Release $NOVA_VERSAO"
+```
+
+Se outros arquivos precisarem legitimamente ser alterados pelo processo de versionamento, adicioná-los explicitamente.
+
+Não utilizar indiscriminadamente:
+
+```bash
+git add .
+```
+
+dentro do script de atualização.
+
+---
+
+# 26. Push da branch
+
+Enviar o commit:
+
+```bash
+git push origin <branch>
+```
+
+Confirmar sucesso antes de continuar.
+
+---
+
+# 27. Criar tag
+
+Após o commit ser enviado com sucesso, criar uma tag anotada:
+
+```bash
+git tag -a "v$NOVA_VERSAO" \
+    -m "Print Agent $NOVA_VERSAO"
+```
+
+Exemplo:
+
+```text
+v1.0.3
+```
+
+---
+
+# 28. Push da tag
+
+Enviar somente a nova tag:
+
+```bash
+git push origin "v$NOVA_VERSAO"
+```
+
+Não utilizar por padrão:
+
+```bash
+git push --tags
+```
+
+Isso evita enviar acidentalmente outras tags locais.
+
+O envio dessa tag deverá disparar:
+
+```text
+.github/workflows/release-windows.yml
+```
+
+---
+
+# 29. Responsabilidade do script
+
+O script deve entender que ele NÃO gera o `.exe` localmente.
+
+A responsabilidade será:
+
+```text
+scriptAtualizacaoGitHub.sh
+        │
+        ├── incrementa versão
+        ├── testa aplicação
+        ├── commit
+        ├── push
+        ├── cria tag
+        └── push da tag
+                 │
+                 ▼
+             GitHub
+                 │
+                 ▼
+          GitHub Actions
+                 │
+                 ├── Windows runner
+                 ├── Java 17
+                 ├── Maven
+                 ├── jpackage
+                 ├── runtime Java
+                 └── EXE
+                        │
+                        ▼
+                GitHub Release
+```
+
+---
+
+# 30. Saída esperada do script
+
+Durante execução, mostrar informações claras.
+
+Exemplo:
+
+```text
+=========================================
+Print Agent - Publicação GitHub
+=========================================
+
+Branch.............: main
+Versão atual.......: 1.0.2
+Nova versão........: 1.0.3
+Tag................: v1.0.3
+
+Verificando repositório...
+OK
+
+Atualizando versão...
+1.0.2 -> 1.0.3
+
+Executando testes e build...
+OK
+
+Criando commit...
+Release 1.0.3
+
+Enviando branch...
+OK
+
+Criando tag...
+v1.0.3
+
+Enviando tag...
+OK
+
+=========================================
+Versão 1.0.3 enviada com sucesso.
+=========================================
+
+O GitHub Actions foi acionado pela tag:
+
+v1.0.3
+
+Após a conclusão do workflow, o instalador
+Windows estará disponível na GitHub Release.
+```
+
+Não afirmar que o `.exe` já foi criado quando apenas a tag tiver sido enviada.
+
+O processo de GitHub Actions ocorre separadamente.
+
+---
+
+# 31. Permissão do script
+
+Garantir que o script fique executável.
+
+Executar:
+
+```bash
+chmod +x gitHub/scriptAtualizacaoGitHub.sh
+```
+
+O bit de execução deve ser registrado no Git.
+
+---
+
+# 32. Execução
+
+O fluxo do desenvolvedor deverá ser simplesmente:
+
+```bash
+./gitHub/scriptAtualizacaoGitHub.sh
+```
+
+Não exigir que o desenvolvedor informe manualmente a próxima versão.
+
+O script deve calculá-la.
+
+---
+
+# 33. Não solicitar versão
+
+Não implementar algo como:
+
+```text
+Informe a nova versão:
+```
+
+para o fluxo normal.
+
+A versão deve ser calculada automaticamente.
+
+Exemplo:
+
+```text
+1.0.2
+↓
+1.0.3
+```
+
+---
+
+# 34. Relação entre pom.xml e tag
+
+A versão:
+
+```xml
+<version>1.0.3</version>
+```
+
+deve gerar:
+
+```text
+v1.0.3
+```
+
+A GitHub Release deve corresponder à mesma versão.
+
+Não permitir situações como:
+
+```text
+pom.xml = 1.0.3
+tag     = v1.0.4
+```
+
+---
+
+# 35. Validação no GitHub Actions
+
+No workflow, validar que a versão da tag corresponde à versão do `pom.xml`.
+
+Exemplo:
+
+```text
+tag:
+v1.0.3
+
+pom:
+1.0.3
+```
+
+Remover o prefixo:
+
+```text
+v
+```
+
+da tag e comparar.
+
+Se houver divergência, falhar o workflow.
+
+Isso protege contra criação manual incorreta de tags.
+
+---
+
+# 36. Nome do instalador
+
+Se o `jpackage` não produzir automaticamente um nome contendo a versão de maneira adequada, renomear o arquivo final antes de publicá-lo.
+
+Formato desejado:
+
+```text
+PrintAgent-1.0.3-Windows-x64.exe
+```
+
+Preferencialmente utilizar esse padrão.
+
+Exemplos:
+
+```text
+PrintAgent-1.0.3-Windows-x64.exe
+PrintAgent-1.0.4-Windows-x64.exe
+PrintAgent-2.0.0-Windows-x64.exe
+```
+
+O asset publicado na Release deve possuir esse nome previsível.
+
+---
+
+# 37. Arquitetura
+
+O instalador inicialmente será destinado a:
+
+```text
+Windows x64
+```
+
+Não é necessário gerar versão ARM nesta implementação.
+
+O nome do arquivo deve deixar isso claro:
+
+```text
+Windows-x64
+```
+
+---
+
+# 38. Verificação do executável
+
+Antes de publicar o artifact/release, confirmar no workflow que existe exatamente o instalador esperado.
+
+O workflow deve falhar caso nenhum `.exe` seja encontrado.
+
+Não publicar Release vazia.
+
+---
+
+# 39. Não versionar arquivos gerados
+
+Não adicionar ao Git:
+
+```text
+target/
+build/
+*.exe
+```
+
+Verificar o `.gitignore` e acrescentar entradas se necessário.
+
+Os binários serão armazenados no:
+
+```text
+GitHub Actions Artifacts
+```
+
+e:
+
+```text
+GitHub Releases
+```
+
+Não devem ficar versionados no repositório.
+
+---
+
+# 40. Segurança
+
+Não adicionar tokens pessoais ao projeto.
+
+Não adicionar:
+
+```text
+GITHUB_TOKEN
+```
+
+manualmente ao repositório.
+
+Utilizar o token disponibilizado automaticamente pelo GitHub Actions:
+
+```yaml
+${{ github.token }}
+```
+
+Nunca colocar credenciais diretamente no YAML.
+
+---
+
+# 41. Tratamento de falhas
+
+Tanto workflow quanto script devem falhar explicitamente.
+
+Não esconder erros com:
+
+```bash
+|| true
+```
+
+salvo se houver uma situação específica, justificada e que não comprometa o processo.
+
+Não criar release se:
+
+* Maven falhar;
+* testes falharem;
+* `jpackage` falhar;
+* WiX falhar;
+* executável não existir;
+* tag e POM divergirem.
+
+---
+
+# 42. Documentação
+
+Criar ou atualizar documentação apropriada explicando o processo de publicação.
+
+Pode ser, por exemplo:
+
+```text
+docs/release-windows.md
+```
+
+ou outro local que esteja de acordo com a organização já existente.
+
+Documentar pelo menos:
+
+```text
+Como publicar nova versão:
+
+./gitHub/scriptAtualizacaoGitHub.sh
+```
+
+Explicar que:
+
+1. o script incrementa o PATCH;
+2. altera o POM;
+3. executa o build;
+4. cria commit;
+5. envia para o GitHub;
+6. cria tag;
+7. envia tag;
+8. GitHub Actions gera o instalador;
+9. o `.exe` aparece em Releases.
+
+---
+
+# 43. Arquivos esperados ao final
+
+No mínimo deverão existir:
+
+```text
+.github/
+└── workflows/
+    └── release-windows.yml
+
+gitHub/
+└── scriptAtualizacaoGitHub.sh
+```
+
+Além de eventuais alterações necessárias em:
+
+```text
+pom.xml
+.gitignore
+```
+
+e documentação.
+
+---
+
+# 44. Testes do script
+
+Antes de considerar concluído, revisar principalmente:
+
+* parsing da versão;
+* incremento do PATCH;
+* versão `1.0.9` deve virar `1.0.10`;
+* versão `1.9.9` deve virar `1.9.10`;
+* detecção de working tree suja;
+* detecção de branch incorreta;
+* detecção de branch desatualizada;
+* tag já existente;
+* erro no Maven;
+* erro no push;
+* erro na criação da tag.
+
+Não implementar incremento tratando a versão como número decimal.
+
+Por exemplo:
+
+```text
+1.0.9
+```
+
+não é um decimal.
+
+Deve ser separado em:
+
+```text
+MAJOR=1
+MINOR=0
+PATCH=9
+```
+
+e resultar em:
+
+```text
+1.0.10
+```
+
+---
+
+# 45. Ordem transacional desejada
+
+A ordem deve ser:
+
+```text
+1. validar ambiente
+2. validar Git
+3. atualizar referências remotas
+4. validar branch
+5. validar working tree
+6. descobrir versão
+7. calcular nova versão
+8. verificar tag
+9. atualizar pom.xml
+10. confirmar nova versão
+11. mvn clean package
+12. commit
+13. push branch
+14. criar tag
+15. push tag
+16. informar sucesso
+```
+
+Evitar criar tag antes que o commit tenha sido enviado.
+
+---
+
+# 46. Caso o push da tag falhe
+
+Se:
+
+```text
+git push origin vX.Y.Z
+```
+
+falhar, informar claramente que:
+
+* o commit da nova versão pode já estar no remoto;
+* a Release ainda não foi disparada;
+* a tag precisa ser enviada corretamente.
+
+Não tentar resolver utilizando `--force`.
+
+---
+
+# 47. GitHub Actions e execução manual
+
+O workflow também deve possuir:
+
+```yaml
+workflow_dispatch:
+```
+
+para depuração manual.
+
+Porém:
+
+* execução manual pode gerar artifact;
+* criação de GitHub Release deve ocorrer somente quando existir uma tag válida.
+
+Não criar Release com nome de branch.
+
+---
+
+# 48. Inicialização automática no Windows
+
+Neste primeiro momento, preservar a forma atual de inicialização da aplicação.
+
+Se já existir mecanismo para iniciar automaticamente com Windows, mantê-lo.
+
+Se NÃO existir, não implementar uma solução invasiva sem antes analisar o comportamento atual do Print Agent.
+
+O principal objetivo desta tarefa é:
+
+```text
+build + empacotamento + versionamento + publicação
+```
+
+Não alterar arquitetura da aplicação desnecessariamente.
+
+---
+
+# 49. Ícone
+
+Caso já exista no projeto um ícone apropriado `.ico`, utilizá-lo no `jpackage`.
+
+Exemplo:
+
+```text
+--icon arquivo.ico
+```
+
+Se não existir, não inventar ou baixar ícone externo.
+
+O instalador pode funcionar sem ícone personalizado.
+
+---
+
+# 50. Assinatura digital
+
+Não implementar assinatura digital neste momento caso o projeto não possua certificado de code signing.
+
+Não incluir certificado fictício.
+
+Não incluir segredo no repositório.
+
+Pode documentar que, enquanto não houver assinatura de código, o Windows poderá identificar o editor como desconhecido ou exibir SmartScreen.
+
+Isso não deve bloquear esta implementação.
+
+---
+
+# 51. Compatibilidade com execução atual
+
+Depois das alterações, continuar sendo possível executar durante o desenvolvimento:
+
+```bash
+mvn spring-boot:run
+```
+
+e:
+
+```bash
+java -jar target/print-agent-VERSAO.jar
+```
+
+Não fazer o projeto depender do `jpackage` para execução normal em desenvolvimento.
+
+---
+
+# 52. Critério principal de aceite
+
+A implementação só estará concluída quando o fluxo conceitual for:
+
+```bash
+./gitHub/scriptAtualizacaoGitHub.sh
+```
+
+e isso gerar:
+
+```text
+pom.xml
+1.0.2 -> 1.0.3
+
+        ↓
+
+commit
+"Release 1.0.3"
+
+        ↓
+
+push main
+
+        ↓
+
+tag
+v1.0.3
+
+        ↓
+
+push tag
+
+        ↓
+
+GitHub Actions
+Windows
+
+        ↓
+
+Maven + Java 17
+
+        ↓
+
+JAR Spring Boot
+
+        ↓
+
+jpackage
+
+        ↓
+
+Runtime Java embutido
+
+        ↓
+
+PrintAgent-1.0.3-Windows-x64.exe
+
+        ↓
+
+GitHub Release v1.0.3
+```
+
+O arquivo disponibilizado ao usuário final deverá executar sem necessidade de instalar Java/JRE/JDK separadamente.
+
+---
+
+# 53. Critérios finais de aceite
+
+Antes de encerrar a tarefa, conferir obrigatoriamente:
+
+* [ ] `.github/workflows/release-windows.yml` criado;
+* [ ] `gitHub/scriptAtualizacaoGitHub.sh` criado;
+* [ ] script executável;
+* [ ] Java 17 utilizado no build;
+* [ ] runner Windows utilizado;
+* [ ] Maven executa testes;
+* [ ] versão lida do POM;
+* [ ] PATCH incrementado automaticamente;
+* [ ] POM atualizado automaticamente;
+* [ ] commit automático criado;
+* [ ] tag anotada criada;
+* [ ] push da branch;
+* [ ] push somente da nova tag;
+* [ ] workflow disparado por `v*`;
+* [ ] versão da tag validada contra o POM;
+* [ ] `jpackage` gera `.exe`;
+* [ ] runtime Java incluído;
+* [ ] Windows não precisa de Java instalado;
+* [ ] artifact criado;
+* [ ] GitHub Release criada;
+* [ ] `.exe` anexado à Release;
+* [ ] `.exe` contém versão no nome;
+* [ ] nenhuma credencial adicionada ao repositório;
+* [ ] nenhuma tag sobrescrita;
+* [ ] nenhum `push --force`;
+* [ ] `target`, `build` e `.exe` fora do Git;
+* [ ] documentação atualizada.
+
+---
+
+# 54. Entrega
+
+Ao concluir, apresentar:
+
+1. arquivos criados;
+2. arquivos alterados;
+3. resumo de cada alteração;
+4. conteúdo completo de:
+
+```text
+.github/workflows/release-windows.yml
+```
+
+5. conteúdo completo de:
+
+```text
+gitHub/scriptAtualizacaoGitHub.sh
+```
+
+6. qualquer alteração realizada no:
+
+```text
+pom.xml
+```
+
+7. qualquer alteração realizada no:
+
+```text
+.gitignore
+```
+
+8. instrução exata para publicação:
+
+```bash
+./gitHub/scriptAtualizacaoGitHub.sh
+```
+
+9. exemplo do resultado esperado:
+
+```text
+Versão anterior: 1.0.2
+Nova versão:     1.0.3
+Tag:             v1.0.3
+
+GitHub Release:
+Print Agent 1.0.3
+
+Arquivo:
+PrintAgent-1.0.3-Windows-x64.exe
+```
+
+Não apenas explicar como fazer.
+
+**Implemente efetivamente os arquivos e alterações no projeto.**
+

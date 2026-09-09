@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,15 @@ public class GlobalExceptionHandler {
         String campo = c instanceof UnrecognizedPropertyException u ? u.getPropertyName() : null;
         log.warn("JSON inválido, campo={}: {}", campo, e.getMessage());
         return ResponseEntity.badRequest().body(EnvelopeRespostaDTO.erro("JSON inválido.", List.of(new ErroDTO("REQUISICAO_INVALIDA", "O corpo da requisição não pôde ser interpretado.", campo))));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<EnvelopeRespostaDTO<Map<String, Object>>> recursoNaoEncontrado(NoResourceFoundException e) {
+        log.debug("Recurso não encontrado: {}", e.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(EnvelopeRespostaDTO.erro(
+            "Recurso não encontrado.",
+            List.of(new ErroDTO("RECURSO_NAO_ENCONTRADO", "O recurso solicitado não existe.", null))
+        ));
     }
 
     @ExceptionHandler(Exception.class)
